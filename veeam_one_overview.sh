@@ -20,11 +20,11 @@
 # Configurations
 ##
 # Endpoint URL for InfluxDB
-veeamInfluxDBURL="YOURINFLUXSERVER" ##Use https://fqdn or https://IP in case you use SSL
+veeamInfluxDBURL="YOURINFLUXSERVER" #Your InfluxDB Server, http://FQDN or https://FQDN if using SSL
 veeamInfluxDBPort="8086" #Default Port
-veeamInfluxDBBucket="YOURINFLUXDB" #Default Database
-veeamInfluxDBUser="YOURINFLUXUSER" #User for Database
-veeamInfluxDBPassword="YOURINFLUXPASS" #Password for Database
+veeamInfluxDBBucket="YOURINFLUXDB" # InfluxDB bucket name (not ID)
+veeamInfluxDBToken="TOKEN" # InfluxDB access token with read/write privileges for the bucket
+veeamInfluxDBOrg="ORG NAME" # InfluxDB organisation name (not ID)
 
 # Endpoint URL for login action
 veeamUsername="YOURVEEAMONEUSER" #Usually domain\user or user@domain.tld
