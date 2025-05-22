@@ -22,7 +22,7 @@
 # Endpoint URL for InfluxDB
 veeamInfluxDBURL="YOURINFLUXSERVER" ##Use https://fqdn or https://IP in case you use SSL
 veeamInfluxDBPort="8086" #Default Port
-veeamInfluxDB="YOURINFLUXDB" #Default Database
+veeamInfluxDBBucket="YOURINFLUXDB" #Default Database
 veeamInfluxDBUser="YOURINFLUXUSER" #User for Database
 veeamInfluxDBPassword="YOURINFLUXPASS" #Password for Database
 
