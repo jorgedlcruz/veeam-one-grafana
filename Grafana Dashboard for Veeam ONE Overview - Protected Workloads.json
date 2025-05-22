@@ -1,0 +1,510 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.5.0"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Grafana Dashboard with the ultimate level of visibility for Veeam Data Platform. It uses the truly comprehensive and feature-rich Veeam ONE APIs. This view is Protected Workloads",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "veeam overview"
+      ],
+      "targetBlank": false,
+      "title": "More Veeam Views",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "Overview table with all the protected workloads, and the latest protection date.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "fieldMinMax": false,
+          "mappings": [
+            {
+              "options": {
+                "VSphere": {
+                  "index": 0,
+                  "text": "VMware vSphere"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Workload Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Provisioned Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Job Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 386
+              },
+              {
+                "id": "links"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Parent Hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 179
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last Protected Age"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last Protected Date"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 181
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veeam Backup Server"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 226
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.5.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VBR-VMs"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")\r\n",
+          "refId": "Protected-VBR-Computers"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")\r\n",
+          "refId": "Protected-VBR-FileShares"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VBR-ObjectStorage"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")\r\n",
+          "refId": "Protected-VBR-Applications"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365users\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VB365-Users"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365groups\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VB365-Groups"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VB365-Sites"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365teams\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")\r\n\r\n",
+          "refId": "Protected-VB365-Teams"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VBCloud-VMs"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")\r\n",
+          "refId": "Protected-VBCloud-Fileshares"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")",
+          "refId": "Protected-VBCloud-Databases"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\" and\r\n    (r[\"_field\"] == \"usedSourceSizeBytes\" or r[\"_field\"] == \"provisionedSourceSizeBytes\") and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastProtectedDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastProtectedDateRaw\", \"vmIdInHypervisor\", \"workloadName\", \"platform\", \"backupServerName\", \"jobName\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"vmIdInHypervisor\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"vmIdInHypervisor\")\r\n",
+          "refId": "Protected-VBCloud-Network"
+        }
+      ],
+      "title": "Protected Workloads",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "backupServerName",
+              "jobName",
+              "platform",
+              "workloadName"
+            ],
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_field": true,
+              "_measurement": true,
+              "_start": true,
+              "_stop": true,
+              "_value": true,
+              "backupServerName": false,
+              "parentHostName": false,
+              "platform": false,
+              "vmIdInHypervisor": true,
+              "voneserver": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "_measurement": 12,
+              "_start": 10,
+              "_stop": 11,
+              "_time": 1,
+              "backupServerName": 3,
+              "jobName": 4,
+              "lastProtectedDateRaw": 2,
+              "parentHostName": 7,
+              "platform": 8,
+              "provisionedSourceSizeBytes": 5,
+              "usedSourceSizeBytes": 6,
+              "voneserver": 9,
+              "workloadName": 0
+            },
+            "renameByName": {
+              "_measurement": "",
+              "_time": "Last Protected Date",
+              "_value": "",
+              "backupServerName": "Veeam Backup Server",
+              "jobName": "Job Name",
+              "lastProtectedDateRaw": "Last Protected Age",
+              "parentHostName": "Parent Hostname",
+              "platform": "Platform",
+              "provisionedSourceSizeBytes": "Provisioned Size",
+              "rpo_violation": "Within RPO",
+              "usedSourceSizeBytes": "Used Size",
+              "voneserver": "Veeam ONE",
+              "workloadName": "Workload Name"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 40,
+  "tags": [
+    "veeam",
+    "veeam one",
+    "veeam data platform",
+    "data resilience",
+    "veeam overview"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "definition": "vms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncomputers = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nfileshares = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nobjectstorage = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\napplications = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365users = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365users\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365groups = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365groups\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365sites = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365teams = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365teams\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncloudvms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncloudfs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nclouddb = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncloudnetworks = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nunion(tables: [\r\n    vms,\r\n    computers,\r\n    fileshares,\r\n    objectstorage,\r\n    applications,\r\n    vb365users,\r\n    vb365groups,\r\n    vb365sites,\r\n    vb365teams,\r\n    cloudvms,\r\n    cloudfs,\r\n    clouddb,\r\n    cloudnetworks\r\n  ])\r\n  |> keep(columns: [\"backupServerName\"])\r\n  |> distinct(column: \"backupServerName\")\r\n  |> group()",
+        "includeAll": true,
+        "label": "Backup Server",
+        "multi": true,
+        "name": "vbrserver",
+        "options": [],
+        "query": {
+          "maxDataPoints": 10000,
+          "query": "vms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncomputers = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nfileshares = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nobjectstorage = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\napplications = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365users = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365users\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365groups = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365groups\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365sites = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nvb365teams = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365teams\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncloudvms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncloudfs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nclouddb = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\ncloudnetworks = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] != \"\")\r\n\r\nunion(tables: [\r\n    vms,\r\n    computers,\r\n    fileshares,\r\n    objectstorage,\r\n    applications,\r\n    vb365users,\r\n    vb365groups,\r\n    vb365sites,\r\n    vb365teams,\r\n    cloudvms,\r\n    cloudfs,\r\n    clouddb,\r\n    cloudnetworks\r\n  ])\r\n  |> keep(columns: [\"backupServerName\"])\r\n  |> distinct(column: \"backupServerName\")\r\n  |> group()",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "definition": "vms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncomputers = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nfileshares = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nobjectstorage = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\napplications = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365users = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365users\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365groups = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365groups\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365sites = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365teams = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365teams\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncloudvms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncloudfs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nclouddb = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncloudnetworks = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nunion(tables: [\r\n    vms,\r\n    computers,\r\n    fileshares,\r\n    objectstorage,\r\n    applications,\r\n    vb365users,\r\n    vb365groups,\r\n    vb365sites,\r\n    vb365teams,\r\n    cloudvms,\r\n    cloudfs,\r\n    clouddb,\r\n    cloudnetworks\r\n  ])\r\n  |> keep(columns: [\"platform\"])\r\n  |> distinct(column: \"platform\")\r\n  |> group()\r\n",
+        "includeAll": true,
+        "label": "Platform",
+        "multi": true,
+        "name": "platform",
+        "options": [],
+        "query": {
+          "maxDataPoints": 10000,
+          "query": "vms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncomputers = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nfileshares = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nobjectstorage = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\napplications = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365users = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365users\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365groups = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365groups\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365sites = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nvb365teams = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365teams\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncloudvms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncloudfs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nclouddb = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\ncloudnetworks = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n  |> filter(fn: (r) => r[\"backupServerName\"] =~ /${vbrserver:regex}/)\r\n\r\nunion(tables: [\r\n    vms,\r\n    computers,\r\n    fileshares,\r\n    objectstorage,\r\n    applications,\r\n    vb365users,\r\n    vb365groups,\r\n    vb365sites,\r\n    vb365teams,\r\n    cloudvms,\r\n    cloudfs,\r\n    clouddb,\r\n    cloudnetworks\r\n  ])\r\n  |> keep(columns: [\"platform\"])\r\n  |> distinct(column: \"platform\")\r\n  |> group()\r\n",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "definition": "vms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncomputers = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nfileshares = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nobjectstorage = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\napplications = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvb365sites = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudvms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudfs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nclouddb = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudnetworks = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nunion(tables: [\r\n    vms,\r\n    computers,\r\n    fileshares,\r\n    objectstorage,\r\n    applications,\r\n    vb365sites,\r\n    cloudvms,\r\n    cloudfs,\r\n    clouddb,\r\n    cloudnetworks\r\n  ])\r\n  |> keep(columns: [\"jobName\"])\r\n  |> distinct(column: \"jobName\")\r\n  |> group()\r\n",
+        "includeAll": true,
+        "label": "Job",
+        "multi": true,
+        "name": "jobname",
+        "options": [],
+        "query": {
+          "maxDataPoints": 10000,
+          "query": "vms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvms\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncomputers = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedcomputers\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nfileshares = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedfileshares\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nobjectstorage = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedobjectstorage\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\napplications = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedapplications\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvb365sites = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedvb365sites\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudvms = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudvms\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudfs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudfileshares\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nclouddb = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpublicclouddatabases\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudnetworks = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_protectedpubliccloudnetworks\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"backupServerName\"] =~ /${vbrserver:regex}/ and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nunion(tables: [\r\n    vms,\r\n    computers,\r\n    fileshares,\r\n    objectstorage,\r\n    applications,\r\n    vb365sites,\r\n    cloudvms,\r\n    cloudfs,\r\n    clouddb,\r\n    cloudnetworks\r\n  ])\r\n  |> keep(columns: [\"jobName\"])\r\n  |> distinct(column: \"jobName\")\r\n  |> group()\r\n",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2y",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Grafana Dashboard for Veeam ONE Overview - Protected Workloads",
+  "uid": "aemkyeqxjnu9sd",
+  "version": 10,
+  "weekStart": ""
+}

@@ -1,0 +1,445 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.5.0"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Grafana Dashboard with the ultimate level of visibility for Veeam Data Platform. It uses the truly comprehensive and feature-rich Veeam ONE APIs. This view is Job/Policy History",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "veeam overview"
+      ],
+      "targetBlank": false,
+      "title": "More Veeam Views",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB}"
+      },
+      "description": "Overview table with all the Jobs and Policies, last status, and some job details.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": false
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "fieldMinMax": false,
+          "mappings": [
+            {
+              "options": {
+                "Failed": {
+                  "color": "#e63946",
+                  "index": 1
+                },
+                "Success": {
+                  "color": "#2a9d8f",
+                  "index": 2
+                },
+                "VSphere": {
+                  "index": 0,
+                  "text": "VMware vSphere"
+                },
+                "Warning": {
+                  "color": "#f4a261",
+                  "index": 3
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Job Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 329
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg. Duration (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last Duration"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Transferred Data"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 21,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Last Job Run"
+          }
+        ]
+      },
+      "pluginVersion": "11.5.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmBackupJobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-VMs"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_cloudDirectorVMs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-CloudDirector"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmReplicationJobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-Replica"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_backupCopyJobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-BackupCopy"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmCopyJobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-VMCopy"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_fileBackupJobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-FileBackup"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_agentBackupJobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-AgentBackup"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_agentPolicies\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBR-Jobs-AgentPolicy"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vb365Jobs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VB365-Jobs-Backup"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false,
+          "query": "from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_publicCloudPoliciesVMs\" and\r\n    (r[\"_field\"] == \"jobResult\" or r[\"_field\"] == \"lastRunDurationSec\" or r[\"_field\"] == \"avgDurationSec\" or r[\"_field\"] == \"lastTransferredDataBytes\") and\r\n    r[\"platform\"] =~ /${platform:regex}/ and\r\n    r[\"jobName\"] =~ /${jobname:regex}/\r\n  )\r\n  |> duplicate(column: \"_time\", as: \"lastRunDateRaw\")\r\n  |> pivot(\r\n      rowKey: [\"_time\", \"lastRunDateRaw\", \"platform\", \"jobName\", \"status\"],\r\n      columnKey: [\"_field\"],\r\n      valueColumn: \"_value\"\r\n  )\r\n  |> group(columns: [\"jobName\"])\r\n  |> sort(columns: [\"_time\"], desc: true)\r\n  |> unique(column: \"jobName\")\r\n",
+          "refId": "VBCloud-Policy-VM"
+        }
+      ],
+      "title": "Job/Policy History",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "backupServerName",
+              "jobName",
+              "platform",
+              "workloadName"
+            ],
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_field": true,
+              "_measurement": true,
+              "_start": true,
+              "_stop": true,
+              "_value": true,
+              "backupServerName": false,
+              "jobResult": true,
+              "lastRunDateRaw": true,
+              "parentHostName": false,
+              "platform": false,
+              "vmIdInHypervisor": true,
+              "voneserver": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "_measurement": 10,
+              "_start": 8,
+              "_stop": 9,
+              "_time": 1,
+              "avgDurationSec": 4,
+              "jobName": 0,
+              "jobResult": 12,
+              "lastRunDateRaw": 11,
+              "lastRunDurationSec": 5,
+              "lastTransferredDataBytes": 6,
+              "platform": 2,
+              "status": 3,
+              "voneserver": 7
+            },
+            "renameByName": {
+              "_measurement": "",
+              "_time": "Last Job Run",
+              "_value": "",
+              "avgDurationSec": "Avg. Duration (s)",
+              "backupServerName": "Veeam Backup Server",
+              "jobName": "Job Name",
+              "jobResult": "",
+              "lastProtectedDateRaw": "Last Protected Age",
+              "lastRunDurationSec": "Last Duration",
+              "lastTransferredDataBytes": "Transferred Data",
+              "parentHostName": "Parent Hostname",
+              "platform": "Platform",
+              "provisionedSourceSizeBytes": "Provisioned Size",
+              "rpo_violation": "Within RPO",
+              "status": "Status",
+              "usedSourceSizeBytes": "Used Size",
+              "voneserver": "Veeam ONE",
+              "workloadName": "Workload Name"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 40,
+  "tags": [
+    "veeam",
+    "veeam one",
+    "veeam data platform",
+    "data resilience",
+    "veeam overview"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "definition": "vmBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vmBackupJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\ncloudDirectorJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_cloudDirectorVMs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nvmReplicationJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vmReplicationJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nbackupCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_backupCopyJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nvmCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vmCopyJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nfileBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_fileBackupJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nagentBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_agentBackupJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nagentPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_agentPolicies\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nvb365Jobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vb365Jobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\ncloudVmPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_publicCloudPoliciesVMs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nunion(tables: [\r\n    vmBackupJobs,\r\n    cloudDirectorJobs,\r\n    vmReplicationJobs,\r\n    backupCopyJobs,\r\n    vmCopyJobs,\r\n    fileBackupJobs,\r\n    agentBackupJobs,\r\n    agentPolicies,\r\n    vb365Jobs,\r\n    cloudVmPolicies\r\n  ])\r\n  |> keep(columns: [\"platform\"])\r\n  |> distinct(column: \"platform\")\r\n  |> group()\r\n",
+        "includeAll": true,
+        "label": "Platform",
+        "multi": true,
+        "name": "platform",
+        "options": [],
+        "query": {
+          "maxDataPoints": 10000,
+          "query": "vmBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vmBackupJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\ncloudDirectorJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_cloudDirectorVMs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nvmReplicationJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vmReplicationJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nbackupCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_backupCopyJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nvmCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vmCopyJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nfileBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_fileBackupJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nagentBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_agentBackupJobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nagentPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_agentPolicies\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nvb365Jobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_vb365Jobs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\ncloudVmPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"veeam_ONE_overview_publicCloudPoliciesVMs\")\r\n  |> filter(fn: (r) => r[\"platform\"] != \"\")\r\n\r\nunion(tables: [\r\n    vmBackupJobs,\r\n    cloudDirectorJobs,\r\n    vmReplicationJobs,\r\n    backupCopyJobs,\r\n    vmCopyJobs,\r\n    fileBackupJobs,\r\n    agentBackupJobs,\r\n    agentPolicies,\r\n    vb365Jobs,\r\n    cloudVmPolicies\r\n  ])\r\n  |> keep(columns: [\"platform\"])\r\n  |> distinct(column: \"platform\")\r\n  |> group()\r\n",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "definition": "vmBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmBackupJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudDirectorJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_cloudDirectorVMs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvmReplicationJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmReplicationJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nbackupCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_backupCopyJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvmCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmCopyJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nfileBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_fileBackupJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nagentBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_agentBackupJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nagentPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_agentPolicies\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvb365Jobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vb365Jobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudVmPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_publicCloudPoliciesVMs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nunion(tables: [\r\n    vmBackupJobs,\r\n    cloudDirectorJobs,\r\n    vmReplicationJobs,\r\n    backupCopyJobs,\r\n    vmCopyJobs,\r\n    fileBackupJobs,\r\n    agentBackupJobs,\r\n    agentPolicies,\r\n    vb365Jobs,\r\n    cloudVmPolicies\r\n  ])\r\n  |> keep(columns: [\"jobName\"])\r\n  |> distinct(column: \"jobName\")\r\n  |> group()\r\n",
+        "includeAll": true,
+        "label": "Job",
+        "multi": true,
+        "name": "jobname",
+        "options": [],
+        "query": {
+          "maxDataPoints": 10000,
+          "query": "vmBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmBackupJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudDirectorJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_cloudDirectorVMs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvmReplicationJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmReplicationJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nbackupCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_backupCopyJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvmCopyJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vmCopyJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nfileBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_fileBackupJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nagentBackupJobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_agentBackupJobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nagentPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_agentPolicies\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nvb365Jobs = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_vb365Jobs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\ncloudVmPolicies = from(bucket: v.defaultBucket)\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) =>\r\n    r[\"_measurement\"] == \"veeam_ONE_overview_publicCloudPoliciesVMs\" and\r\n    r[\"jobName\"] != \"\" and\r\n    r[\"platform\"] =~ /${platform:regex}/\r\n  )\r\n\r\nunion(tables: [\r\n    vmBackupJobs,\r\n    cloudDirectorJobs,\r\n    vmReplicationJobs,\r\n    backupCopyJobs,\r\n    vmCopyJobs,\r\n    fileBackupJobs,\r\n    agentBackupJobs,\r\n    agentPolicies,\r\n    vb365Jobs,\r\n    cloudVmPolicies\r\n  ])\r\n  |> keep(columns: [\"jobName\"])\r\n  |> distinct(column: \"jobName\")\r\n  |> group()\r\n",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2y",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Grafana Dashboard for Veeam ONE Overview - Job/Policy History",
+  "uid": "femnae6f6w7i8d",
+  "version": 4,
+  "weekStart": ""
+}
